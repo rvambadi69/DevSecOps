@@ -1,121 +1,222 @@
-# Zero-Trust CI/CD Pipeline for Microservices
+# 🔐 Zero-Trust CI/CD Pipeline for Microservices
+### DevSecOps College Project | Rohit | Rahul | Praveen
 
-A **Spring Boot microservices demo project** showcasing a Zero-Trust security architecture with two independent services communicating via REST APIs.
+![GitHub Actions](https://img.shields.io/badge/CI/CD-GitHub%20Actions-blue)
+![Docker](https://img.shields.io/badge/Container-Docker-2496ED)
+![Kubernetes](https://img.shields.io/badge/Orchestration-Kubernetes-326CE5)
+![SonarCloud](https://img.shields.io/badge/SAST-SonarCloud-F3702A)
+![Trivy](https://img.shields.io/badge/Scanner-Trivy-1904DA)
+![GitLeaks](https://img.shields.io/badge/Secrets-GitLeaks-red)
 
-## Project Structure
+---
+
+## 📌 Project Overview
+
+This project implements a **Zero-Trust CI/CD pipeline** for a microservices-based application using DevSecOps principles.
+
+> **"Trust nothing, verify everything — every build is treated as potentially compromised until proven secure through automated scanning."**
+
+The pipeline follows the **Shift-Left Security Philosophy**, meaning security checks happen at the **earliest possible stage** — before a commit, after a push, and before deployment.
+
+---
+
+## 🏗️ Architecture
 
 ```
-zero-trust-cicd-microservices/
-├── order-service/              # Order Management Service
-│   ├── src/main/java/...
-│   ├── pom.xml
-│   └── Dockerfile
+Developer Machine
+      |
+ [git commit] ──► Pre-commit Hook (GitLeaks)
+      |
+ [git push]  ──► GitHub Repository
+                       |
+              GitHub Actions Pipeline
+              |         |          |
+          GitLeaks  SonarCloud  Maven Build
+          (Secrets)  (SAST)     (Compile)
+                                   |
+                             Docker Build & Push
+                                   |
+                             Trivy Scan (CVEs)
+                                   |
+                        Kubernetes (Minikube)
+                        |                  |
+                 Order Service       Payment Service
+                 (Port 8080)         (Port 8081)
+```
+
+---
+
+## 👥 Team Members & Roles
+
+| Member | Role | Responsibilities |
+|--------|------|-----------------|
+| **Rohit** | Microservices Developer | Order & Payment Service, REST APIs, Dockerfiles, GitHub Setup |
+| **Rahul** | CI/CD Engineer | GitHub Actions Pipeline, Docker Build & Push, Automation |
+| **Praveen** | Security & DevOps | SonarQube, GitLeaks, Trivy, Kubernetes Deployment |
+
+---
+
+## 📁 Project Structure
+
+```
+devsecops-project/
 │
-├── payment-service/             # Payment Processing Service
-│   ├── src/main/java/...
-│   ├── pom.xml
-│   └── Dockerfile
+├── order-service/                  # Order Microservice
+│     ├── src/main/java/
+│     │     ├── OrderServiceApplication.java
+│     │     ├── controller/
+│     │     │     └── OrderController.java
+│     │     ├── service/
+│     │     │     └── OrderService.java
+│     │     └── model/
+│     │           ├── Order.java
+│     │           ├── PaymentRequest.java
+│     │           └── PaymentResponse.java
+│     ├── src/main/resources/
+│     │     └── application.properties
+│     ├── Dockerfile
+│     └── pom.xml
 │
-├── docker-compose.yml
+├── payment-service/                # Payment Microservice
+│     ├── src/main/java/
+│     │     ├── PaymentServiceApplication.java
+│     │     ├── controller/
+│     │     │     └── PaymentController.java
+│     │     ├── service/
+│     │     │     └── PaymentService.java
+│     │     └── model/
+│     │           ├── Payment.java
+│     │           └── PaymentRequest.java
+│     ├── src/main/resources/
+│     │     └── application.properties
+│     ├── Dockerfile
+│     └── pom.xml
+│
+├── k8s/                            # Kubernetes Manifests
+│     ├── order-deployment.yaml
+│     ├── order-service.yaml
+│     ├── payment-deployment.yaml
+│     └── payment-service.yaml
+│
+├── .github/
+│     └── workflows/
+│           └── pipeline.yml        # GitHub Actions CI/CD Pipeline
+│
+├── .pre-commit-config.yaml         # GitLeaks Pre-commit Hook
+├── docker-compose.yml              # Local Development
 └── README.md
 ```
 
-## Services Overview
+---
 
-### Order Service (Port: 8080)
-**Responsibility**: Manage orders and coordinate with Payment Service
+## 🛠️ Tech Stack
 
-**Endpoints**:
-- `POST /orders` - Create a new order
-- `GET /orders` - Retrieve all orders
-- `GET /actuator/health` - Health check
+| Category | Tool |
+|----------|------|
+| Microservices | Spring Boot (Java 17) |
+| Version Control | Git + GitHub |
+| Containerization | Docker (Multi-stage builds) |
+| CI/CD | GitHub Actions |
+| Secret Detection | GitLeaks |
+| SAST Scanning | SonarCloud |
+| Container Scanning | Trivy |
+| Orchestration | Kubernetes (Minikube) |
 
-**Order Model**:
-```json
-{
-  "orderId": "string (UUID)",
-  "product": "string",
-  "amount": "double",
-  "status": "PENDING | CONFIRMED | FAILED"
-}
+---
+
+## 🔒 Shift-Left Security Layers
+
+```
+LAYER 1 — Before Commit (Local)
+  Tool: GitLeaks Pre-commit Hook
+  Catches: API keys, passwords, tokens
+
+LAYER 2 — After Push (Pipeline)
+  Tool: GitLeaks + SonarCloud
+  Catches: Secrets in history + Code vulnerabilities
+
+LAYER 3 — After Docker Build
+  Tool: Trivy
+  Catches: CVEs in OS packages + base image
 ```
 
-### Payment Service (Port: 8081)
-**Responsibility**: Process payments with 80% success simulation
+---
 
-**Endpoints**:
-- `POST /payments` - Process payment
-- `GET /payments` - Retrieve all payments
-- `GET /actuator/health` - Health check
+## 🚀 Getting Started
 
-**Payment Model**:
-```json
-{
-  "paymentId": "string (UUID)",
-  "orderId": "string",
-  "amount": "double",
-  "status": "SUCCESS | FAILED"
-}
-```
+### Prerequisites
+- Java 17
+- Docker Desktop
+- Git
+- Maven
 
-## Prerequisites
-
-- Docker & Docker Compose
-- Maven 3.9+ (for local development)
-- Java 17+
-
-## Quick Start
-
-### Option 1: Run with Docker Compose (Recommended)
-
+### 1. Clone the Repository
 ```bash
-cd zero-trust-cicd-microservices
+git clone https://github.com/your-username/devsecops-project.git
+cd devsecops-project
+```
+
+### 2. Install Pre-commit Hook (GitLeaks)
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+### 3. Run Locally with Docker Compose
+```bash
 docker-compose up --build
 ```
 
-Services will be available at:
-- Order Service: `http://localhost:8080`
-- Payment Service: `http://localhost:8081`
-
-### Option 2: Build and Run Locally
-
-#### Build Both Services
+### 4. Test the APIs
 ```bash
-# Build Order Service
-cd order-service
-mvn clean package
-java -jar target/order-service-1.0.0.jar
-
-# In another terminal, build Payment Service
-cd payment-service
-mvn clean package
-java -jar target/payment-service-1.0.0.jar
-```
-
-## API Testing Examples
-
-### Health Checks
-
-```bash
-# Order Service Health
-curl -X GET http://localhost:8080/actuator/health
-
-# Payment Service Health
-curl -X GET http://localhost:8081/actuator/health
-```
-
-### Create an Order
-
-```bash
+# Create an order
 curl -X POST http://localhost:8080/orders \
   -H "Content-Type: application/json" \
-  -d '{
-    "product": "Laptop",
-    "amount": 999
-  }'
+  -d '{"product": "Laptop", "amount": 999}'
+
+# Get all orders
+curl http://localhost:8080/orders
+
+# Get all payments
+curl http://localhost:8081/payments
 ```
 
-**Response** (if payment successful):
+---
+
+## 🔄 CI/CD Pipeline Stages
+
+| Stage | Tool | Purpose |
+|-------|------|---------|
+| 1. Secret Detection | GitLeaks | Scan for hardcoded secrets |
+| 2. SAST Scan | SonarCloud | Static code analysis |
+| 3. Build | Maven | Compile both services |
+| 4. Docker Build & Push | Docker | Create and push images |
+| 5. Container Scan | Trivy | Scan images for CVEs |
+| 6. Deploy | Kubernetes | Deploy to Minikube |
+
+> Pipeline triggers automatically on every push to `main` branch.
+
+---
+
+## 🌐 API Endpoints
+
+### Order Service (Port 8080)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/orders` | Create a new order |
+| GET | `/orders` | Get all orders |
+| GET | `/actuator/health` | Health check |
+
+**Request Body (POST /orders):**
+```json
+{
+  "product": "Laptop",
+  "amount": 999
+}
+```
+
+**Response:**
 ```json
 {
   "orderId": "550e8400-e29b-41d4-a716-446655440000",
@@ -125,191 +226,77 @@ curl -X POST http://localhost:8080/orders \
 }
 ```
 
-**Response** (if payment failed):
-```json
-{
-  "orderId": "550e8400-e29b-41d4-a716-446655440001",
-  "product": "Laptop",
-  "amount": 999,
-  "status": "FAILED"
-}
-```
+### Payment Service (Port 8081)
 
-### Get All Orders
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/payments` | Process a payment |
+| GET | `/payments` | Get all payments |
+| GET | `/actuator/health` | Health check |
 
-```bash
-curl -X GET http://localhost:8080/orders
-```
+> **Note:** Payment service has an **80% success rate** to simulate real-world scenarios.
 
-**Response**:
-```json
-[
-  {
-    "orderId": "550e8400-e29b-41d4-a716-446655440000",
-    "product": "Laptop",
-    "amount": 999,
-    "status": "CONFIRMED"
-  }
-]
-```
+---
 
-### Get All Payments
+## ☸️ Kubernetes Deployment
 
 ```bash
-curl -X GET http://localhost:8081/payments
+# Start Minikube
+minikube start
+
+# Deploy Payment Service first
+kubectl apply -f k8s/payment-deployment.yaml
+kubectl apply -f k8s/payment-service.yaml
+
+# Deploy Order Service
+kubectl apply -f k8s/order-deployment.yaml
+kubectl apply -f k8s/order-service.yaml
+
+# Check pods
+kubectl get pods
+
+# Get access URL
+minikube service order-service --url
 ```
 
-**Response**:
-```json
-[
-  {
-    "paymentId": "660e8400-e29b-41d4-a716-446655440001",
-    "orderId": "550e8400-e29b-41d4-a716-446655440000",
-    "amount": 999,
-    "status": "SUCCESS"
-  }
-]
-```
+---
 
-## DevSecOps Security Features
+## 🧪 Testing GitLeaks (Secret Detection Demo)
 
-### GitLeaks Pre-commit Hook
-This project includes **GitLeaks** integration to detect hardcoded secrets before they're committed to the repository.
-
-**How it works**:
-- Every git commit is scanned for exposed secrets (API keys, AWS credentials, tokens, etc.)
-- If secrets are detected, the commit is **BLOCKED**
-- The `.pre-commit-config.yaml` file defines the GitLeaks rule
-
-**Verify it's working**:
 ```bash
-# Try to commit a file with a fake secret
-git add .
+# Step 1: Add fake secret to docker-compose.yml
+
+# Step 2: Try to commit
+git add docker-compose.yml
 git commit -m "test"
+# Result: COMMIT BLOCKED by GitLeaks ❌
 
-# Expected output if secret is found:
-# gitleaks...........................................FAILED
-# ❌ Commit BLOCKED - Contains hardcoded secrets!
-
-# Remove the secret and try again
-git commit -m "test"
-
-# Expected output:
-# gitleaks...........................................PASSED
-# ✅ Commit allowed
+# Step 3: Remove secret and commit again
+# Result: Commit ALLOWED ✅
 ```
 
-## Microservice Communication
+---
 
-The Order Service communicates with the Payment Service synchronously:
+## 📊 Project Status
 
-1. Client sends POST request to Order Service
-2. Order Service creates an order with PENDING status
-3. Order Service calls Payment Service API via RestTemplate
-4. Payment Service simulates payment (80% success rate)
-5. Order Service updates order status based on payment response
-   - SUCCESS → Order status = CONFIRMED
-   - FAILED → Order status = FAILED
+| Component | Status |
+|-----------|--------|
+| Order Service | ✅ Complete |
+| Payment Service | ✅ Complete |
+| Dockerfiles | ✅ Complete |
+| Docker Compose | ✅ Complete |
+| GitHub Actions Pipeline | ✅ Complete |
+| GitLeaks | ✅ Complete |
+| SonarCloud | ✅ Complete |
+| Trivy | ✅ Complete |
+| Kubernetes Deployment | ✅ Complete |
 
-## Docker Images
+---
 
-### Building Images Manually
+## 📄 License
 
-```bash
-# Build Order Service Image
-docker build -t order-service:1.0.0 ./order-service
+This project is developed for academic purposes as part of B.Tech Computer Science & Engineering curriculum.
 
-# Build Payment Service Image
-docker build -t payment-service:1.0.0 ./payment-service
+---
 
-# Run with custom network
-docker network create devsecops-network
-docker run -d -p 8081:8081 --name payment-service --network devsecops-network payment-service:1.0.0
-docker run -d -p 8080:8080 --name order-service --network devsecops-network order-service:1.0.0
-```
-
-## Stopping Services
-
-### With Docker Compose
-```bash
-docker-compose down
-```
-
-### Manual Docker
-```bash
-docker stop order-service payment-service
-docker rm order-service payment-service
-```
-
-## Code Structure
-
-### Order Service
-- **Model**: `Order.java`, `PaymentRequest.java`, `PaymentResponse.java`
-- **Controller**: `OrderController.java`
-- **Service**: `OrderService.java`
-- **Application**: `OrderServiceApplication.java`
-
-### Payment Service
-- **Model**: `Payment.java`, `PaymentRequest.java`
-- **Controller**: `PaymentController.java`
-- **Service**: `PaymentService.java`
-- **Application**: `PaymentServiceApplication.java`
-
-## Key Features for DevSecOps
-
-1. **Containerization**: Multi-stage Docker builds for minimal image size
-2. **Service Isolation**: Services run in separate containers
-3. **Internal Communication**: Services communicate via REST with automatic DNS resolution
-4. **Health Checks**: Dedicated `/health` endpoints for monitoring
-5. **Stateless Design**: No shared state between services
-6. **Simple Deployment**: Single `docker-compose.yml` for orchestration
-
-## Technology Stack
-
-- **Framework**: Spring Boot 3.2.0
-- **Language**: Java 17
-- **Build Tool**: Maven 3.9.4
-- **Container**: Docker & Docker Compose
-- **HTTP Client**: RestTemplate (Spring)
-
-## Troubleshooting
-
-### "Connection refused" when Order Service calls Payment Service
-- Ensure Payment Service is running
-- Check that payment-service hostname is resolvable (correct docker-compose.yml setup)
-- Verify network connectivity: `docker network ls`
-
-### Services won't start
-```bash
-# Check logs
-docker-compose logs -f order-service
-docker-compose logs -f payment-service
-
-# Rebuild images
-docker-compose up --build --force-recreate
-```
-
-### Port already in use
-Change ports in `docker-compose.yml` or stop conflicting services:
-```bash
-docker ps -a
-docker stop <container_id>
-```
-
-## Learning Outcomes
-
-This project demonstrates:
-- Microservices architecture with Spring Boot
-- Inter-service REST communication
-- Docker containerization
-- Docker Compose orchestration
-- Service discovery via DNS
-- In-memory data storage
-- RESTful API design
-- Error handling in distributed systems
-
-## Author
-DevSecOps Learning Project
-
-## License
-MIT
+*Made with ❤️ by Rohit, Rahul & Praveen*
